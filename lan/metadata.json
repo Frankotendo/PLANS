@@ -1,0 +1,7 @@
+{
+  "name": "GeoLevelUp",
+  "description": "A strategic learning and schedule manager for a Geomatics student leveling up in GIS, Trading, Cybersecurity, and Business.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
