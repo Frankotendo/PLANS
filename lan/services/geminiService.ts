@@ -1,148 +1,138 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { UserProfile, DailyPlan, StrategyPath } from "../types";
+import { FALLBACK_DAILY_PLAN, FALLBACK_STRATEGIES } from "../constants";
+
+// Using gemini-2.5-flash as it is currently stable and fast for JSON generation
+const MODEL_NAME = 'gemini-2.5-flash'; 
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are an elite productivity and career strategist for a high-potential Geomatics student.
 The user is ambitious, running a business ('MyNexRyde'), studying Geomatics, and learning Trading, Cybersecurity, and Programming.
-Your goal is to maximize their "Level Up" speed by finding synergies (e.g., Spatial Finance, Geo-Cybersecurity) and creating realistic, high-performance schedules.
-Use the Pareto Principle (80/20 rule) to suggest high-leverage activities that combine multiple skills.
+Your goal is to maximize their "Level Up" speed by finding synergies.
 `;
 
-// Helper to clean Markdown code blocks from JSON response
-const cleanJson = (text: string): string => {
-  if (!text) return "";
-  // Remove ```json at the start and ``` at the end, and any surrounding whitespace
-  return text.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+// Robust JSON cleaner that handles Markdown and potential garbage
+const cleanAndParseJson = <T>(text: string, fallback: T): T => {
+  if (!text) return fallback;
+  
+  try {
+      let clean = text.trim();
+      // Remove markdown code blocks if present
+      clean = clean.replace(/```json/g, '').replace(/```/g, '');
+      
+      // Find the first outer brace or bracket
+      const firstBrace = clean.indexOf('{');
+      const firstBracket = clean.indexOf('[');
+      
+      if (firstBrace === -1 && firstBracket === -1) {
+          console.warn("No JSON structure found in response");
+          return fallback;
+      }
+      
+      const isObject = firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket);
+      const start = isObject ? firstBrace : firstBracket;
+      const end = isObject ? clean.lastIndexOf('}') : clean.lastIndexOf(']');
+      
+      if (start !== -1 && end !== -1 && end >= start) {
+        clean = clean.substring(start, end + 1);
+        return JSON.parse(clean);
+      }
+      
+      return JSON.parse(clean);
+  } catch (e) {
+      console.error("JSON Parse Error:", e);
+      console.log("Raw Text:", text);
+      return fallback;
+  }
 };
 
 export const generateDailySchedule = async (profile: UserProfile, date: Date): Promise<DailyPlan> => {
   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
   
   const prompt = `
-    Generate a strict, optimized daily schedule for ${dayName} covering the entire day from **Waking Up** to **Sleep**.
+    Create a strict JSON schedule for ${dayName}.
+    User: Geomatics student, Trader, Cyber learner. Business: '${profile.businessName}'.
+    Fixed Classes: "${profile.schoolSchedule}".
     
-    CRITICAL - FIXED SCHOOL TIMETABLE:
-    The user has the following fixed commitments (School/Classes). You MUST schedule around these. Do NOT schedule other tasks during these times. Mark these blocks as category 'fixed'.
-    "${profile.schoolSchedule}"
-
-    User Constraints:
-    - **Identity**: Geomatics Student leveling up fast.
-    - **Business**: Must work on '${profile.businessName}' EVERY DAY.
-    - **Hobbies**: Trading, Cybersecurity, Programming must be practiced EVERY DAY.
-    - **Health**: Gym is mandatory.
-    - **Sports**: Volleyball is MANDATORY on Saturday and Sunday.
-    
-    A-STUDENT STUDY METHODS (Apply these in descriptions):
-    - Use **Active Recall** (Testing self instead of re-reading).
-    - Use **Spaced Repetition** (Reviewing older concepts).
-    - Use **Pomodoro** (25m focus / 5m break) for coding/trading sessions.
-    - Use **Feynman Technique** (Teach it to understand it).
-    - **Skill Stacking**: Combine GIS with Trading or Cyber in the same block.
-    
-    Rules:
-    1. **Start with "Wake Up"** and morning routine.
-    2. Deep work blocks for Geomatics/Programming in the morning when fresh (unless Class is in session).
-    3. Trading study/practice during market hours or evening analysis.
-    4. Business operations (MyNexRyde) block required daily.
-    5. Gym time required (if not playing Volleyball, or light session if playing).
-    6. **End with "Sleep"** routine.
-    7. Combine topics where possible (e.g., "Program a GIS trading bot") to level up faster.
-    
-    Return the response in JSON format matching the schema.
+    Structure the response EXACTLY like this JSON example:
+    {
+      "date": "2024-01-01",
+      "dayOfWeek": "Monday",
+      "focusOfTheDay": "Theme of the day",
+      "tips": ["Tip 1", "Tip 2"],
+      "schedule": [
+        { "time": "08:00", "activity": "Title", "category": "learning", "description": "Details" }
+      ]
+    }
+    Allowed categories: learning, business, health, hobby, rest, fixed.
+    IMPORTANT: Return ONLY valid JSON. No Markdown. No introduction.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: MODEL_NAME,
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            date: { type: Type.STRING },
-            dayOfWeek: { type: Type.STRING },
-            focusOfTheDay: { type: Type.STRING },
-            tips: { type: Type.ARRAY, items: { type: Type.STRING } },
-            schedule: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  time: { type: Type.STRING },
-                  activity: { type: Type.STRING },
-                  category: { type: Type.STRING, enum: ['learning', 'business', 'health', 'hobby', 'rest', 'fixed'] },
-                  description: { type: Type.STRING }
-                },
-                required: ['time', 'activity', 'category', 'description']
-              }
-            }
-          },
-          required: ['schedule', 'focusOfTheDay', 'dayOfWeek']
-        }
+        // We do NOT use responseSchema here to allow the model more flexibility 
+        // which often prevents "blocked" responses on the free tier/preview models.
+        temperature: 0.7,
       }
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response from AI");
+    if (!text) throw new Error("Empty response");
     
-    // Use cleanJson to strip markdown formatting
-    return JSON.parse(cleanJson(text)) as DailyPlan;
+    return cleanAndParseJson(text, FALLBACK_DAILY_PLAN);
 
   } catch (error) {
-    console.error("Error generating schedule:", error);
-    throw error;
+    console.error("AI Schedule Error (Using Fallback):", error);
+    // Return a modified fallback with the correct date
+    return {
+        ...FALLBACK_DAILY_PLAN,
+        date: date.toISOString(),
+        dayOfWeek: dayName
+    };
   }
 };
 
 export const generateStrategy = async (profile: UserProfile): Promise<StrategyPath[]> => {
   const prompt = `
-    Analyze this profile:
-    - Major: ${profile.major}
-    - Interests: ${profile.hobbies.join(', ')}
-    - Business: ${profile.businessName}
+    Create 3 strategic paths for a Geomatics student interested in Trading, Cyber, and Business (${profile.businessName}).
+    Focus on synergies (e.g. GIS + Trading).
     
-    Provide 3 distinct "Strategic Paths" to level up fast. 
-    Focus on intersections (Synergies). How can Geomatics apply to Trading? How does Cyber apply to GIS?
-    
-    Return JSON.
+    Structure the response EXACTLY as a JSON Array like this:
+    [
+      {
+        "title": "Strategy Name",
+        "description": "Explanation",
+        "synergies": ["Skill A + Skill B"],
+        "actionItems": ["Do this", "Do that"]
+      }
+    ]
+    IMPORTANT: Return ONLY valid JSON Array. No Markdown.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: MODEL_NAME,
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              description: { type: Type.STRING },
-              synergies: { type: Type.ARRAY, items: { type: Type.STRING } },
-              actionItems: { type: Type.ARRAY, items: { type: Type.STRING } }
-            },
-            required: ['title', 'description', 'synergies', 'actionItems']
-          }
-        }
+        temperature: 0.7,
       }
     });
 
     const text = response.text;
-    if (!text) throw new Error("No response from AI");
+    if (!text) throw new Error("Empty response");
     
-    // Use cleanJson here as well
-    return JSON.parse(cleanJson(text)) as StrategyPath[];
+    return cleanAndParseJson(text, FALLBACK_STRATEGIES);
 
   } catch (error) {
-    console.error("Error generating strategy:", error);
-    return [];
+    console.error("AI Strategy Error (Using Fallback):", error);
+    return FALLBACK_STRATEGIES;
   }
 };
 
