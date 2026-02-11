@@ -10,6 +10,13 @@ Your goal is to maximize their "Level Up" speed by finding synergies (e.g., Spat
 Use the Pareto Principle (80/20 rule) to suggest high-leverage activities that combine multiple skills.
 `;
 
+// Helper to clean Markdown code blocks from JSON response
+const cleanJson = (text: string): string => {
+  if (!text) return "";
+  // Remove ```json at the start and ``` at the end, and any surrounding whitespace
+  return text.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+};
+
 export const generateDailySchedule = async (profile: UserProfile, date: Date): Promise<DailyPlan> => {
   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
   
@@ -81,11 +88,12 @@ export const generateDailySchedule = async (profile: UserProfile, date: Date): P
 
     const text = response.text;
     if (!text) throw new Error("No response from AI");
-    return JSON.parse(text) as DailyPlan;
+    
+    // Use cleanJson to strip markdown formatting
+    return JSON.parse(cleanJson(text)) as DailyPlan;
 
   } catch (error) {
     console.error("Error generating schedule:", error);
-    // Fallback or re-throw
     throw error;
   }
 };
@@ -128,7 +136,9 @@ export const generateStrategy = async (profile: UserProfile): Promise<StrategyPa
 
     const text = response.text;
     if (!text) throw new Error("No response from AI");
-    return JSON.parse(text) as StrategyPath[];
+    
+    // Use cleanJson here as well
+    return JSON.parse(cleanJson(text)) as StrategyPath[];
 
   } catch (error) {
     console.error("Error generating strategy:", error);
