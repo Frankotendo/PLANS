@@ -55,17 +55,20 @@ export const FALLBACK_DAILY_PLAN: DailyPlan = {
   focusOfTheDay: "System Recovery & Foundation Building",
   tips: [
     "The AI service is currently unreachable, but discipline remains.",
-    "Focus on your core competencies: Code, Trade, Study.",
-    "Use this fallback schedule to maintain momentum."
+    "Early rising (4 AM) gives you a head start on the market and competition.",
+    "Focus on your core competencies: Code, Trade, Study."
   ],
   schedule: [
-    { time: "07:00", activity: "Wake Up & Hydrate", category: "health", description: "Jumpstart the metabolism." },
-    { time: "08:00", activity: "Deep Work: Geomatics/GIS", category: "learning", description: "Review class notes or work on lab assignments." },
-    { time: "10:00", activity: "MyNexRyde Operations", category: "business", description: "Check emails, dispatch status, and logistics." },
-    { time: "12:00", activity: "Lunch & Market Review", category: "rest", description: "Healthy fuel while checking trading charts." },
+    { time: "04:00", activity: "Wake Up & Hydrate", category: "health", description: "Jumpstart the metabolism. 4 AM Club." },
+    { time: "04:30", activity: "Market Analysis / Trading", category: "business", description: "Review Asian/London session data before US open." },
+    { time: "06:00", activity: "Gym / Physical Training", category: "health", description: "Maintain physical peak performance." },
+    { time: "07:30", activity: "Commute / Audiobooks", category: "learning", description: "Listen to trading or tech podcasts." },
+    { time: "08:30", activity: "Deep Work: Geomatics/GIS", category: "learning", description: "Review class notes or work on lab assignments." },
+    { time: "11:00", activity: "MyNexRyde Operations", category: "business", description: "Check emails, dispatch status, and logistics." },
+    { time: "13:00", activity: "Lunch & Market Check", category: "rest", description: "Refuel and check positions." },
     { time: "14:00", activity: "Skill Stack: Python for Finance", category: "learning", description: "Coding practice combining GIS and Trading concepts." },
-    { time: "17:00", activity: "Gym / Physical Training", category: "health", description: "Maintain physical peak performance." },
+    { time: "17:00", activity: "Volleyball / Active Recovery", category: "health", description: "Sports or stretching." },
     { time: "19:00", activity: "Cybersecurity Lab", category: "hobby", description: "Hack The Box or study network security protocols." },
-    { time: "22:00", activity: "Wind Down & Read", category: "rest", description: "No screens. Prepare for sleep." }
+    { time: "21:00", activity: "Wind Down & Read", category: "rest", description: "No screens. Prepare for sleep." }
   ]
 };
