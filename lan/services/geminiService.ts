@@ -52,10 +52,21 @@ export const generateDailySchedule = async (profile: UserProfile, date: Date): P
   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
   
   const prompt = `
-    Create a strict JSON schedule for ${dayName}.
-    User: Geomatics student, Trader, Cyber learner. Business: '${profile.businessName}'.
-    Fixed Classes: "${profile.schoolSchedule}".
+    Create a strict JSON daily schedule for ${dayName}.
     
+    **CONSTRAINTS & REQUIREMENTS:**
+    1. **WAKE UP TIME**: 04:00 AM. (The schedule MUST start here).
+    2. **FIXED SCHOOL SCHEDULE**: 
+       The user has the following school classes. You MUST schedule these exactly as written and mark category as 'fixed'. Do not schedule other tasks during these times.
+       """
+       ${profile.schoolSchedule}
+       """
+    3. **PRIORITIES**: 
+       - '${profile.businessName}' (Business) - Daily.
+       - Geomatics/GIS (Major) - Daily.
+       - Trading, Cyber, Programming (Hobbies) - Daily.
+       - Gym/Volleyball - Daily/Weekly.
+
     Structure the response EXACTLY like this JSON example:
     {
       "date": "2024-01-01",
@@ -63,7 +74,7 @@ export const generateDailySchedule = async (profile: UserProfile, date: Date): P
       "focusOfTheDay": "Theme of the day",
       "tips": ["Tip 1", "Tip 2"],
       "schedule": [
-        { "time": "08:00", "activity": "Title", "category": "learning", "description": "Details" }
+        { "time": "04:00", "activity": "Wake Up", "category": "health", "description": "Early rise" }
       ]
     }
     Allowed categories: learning, business, health, hobby, rest, fixed.
