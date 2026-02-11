@@ -1,4 +1,4 @@
-import { UserProfile } from './types';
+import { UserProfile, DailyPlan, StrategyPath } from './types';
 
 export const INITIAL_USER_PROFILE: UserProfile = {
   name: "Future Geo-Tycoon",
@@ -16,20 +16,56 @@ export const INITIAL_USER_PROFILE: UserProfile = {
   ]
 };
 
-export const MOCK_STRATEGY = `
-## The Geo-Quant Cyber Strategy
+export const FALLBACK_STRATEGIES: StrategyPath[] = [
+  {
+    title: "The Spatial-Algo Trader",
+    description: "Combine Geomatics with Trading. Use satellite data to predict supply chain movements (e.g., counting cars in retail parking lots or tracking oil tankers) to inform algorithmic trading positions.",
+    synergies: ["GIS + Python", "Remote Sensing + Finance"],
+    actionItems: [
+      "Learn 'yfinance' and 'geopandas' Python libraries.",
+      "Build a heatmap of local business activity using open street map data.",
+      "Backtest a trading strategy based on weather data overlays."
+    ]
+  },
+  {
+    title: "Geo-Cyber Defender",
+    description: "Critical infrastructure is location-based. Master the security of GIS servers (GeoServer, ArcGIS Enterprise). This is a massive, high-paying niche.",
+    synergies: ["Cybersecurity + GIS", "Network Security + IoT"],
+    actionItems: [
+      "Set up a local GeoServer and secure it with SSL/Auth.",
+      "Learn about 'Location Spoofing' and how to detect it.",
+      "Audit the MyNexRyde app for location data privacy leaks."
+    ]
+  },
+  {
+    title: "MyNexRyde Operator",
+    description: "Treat your business as your primary case study. automated logistics, route optimization, and customer density analysis using your Geomatics skills.",
+    synergies: ["Business + Optimization", "App Dev + Routing"],
+    actionItems: [
+      "Visualize your current customer database on a map.",
+      "Automate one manual business process using Python scripts.",
+      " dedicate 1 hour daily to 'Deep Work' on business operations."
+    ]
+  }
+];
 
-**Core Concept:** You are not just a Geomatics student. You are building a "Spatial Intelligence Nexus".
-
-### 1. The Golden Intersection (Fastest Level Up)
-Instead of learning these separately, learn them together:
-*   **GIS + Trading:** "Spatial Finance". Analyze satellite imagery (corn fields, oil tankers, parking lots) to predict market movements.
-    *   *Action:* Build a Python script that counts cars in retail parking lots from satellite open data to predict earnings.
-*   **GIS + Cybersecurity:** "Critical Infrastructure Protection". Maps are sensitive. Learn how to secure WFS/WMS services and prevent GPS spoofing.
-    *   *Action:* Set up a secure GeoServer instance and try to penetrate it (White Hat).
-*   **Programming:** The glue. Focus on Python (backend/analysis) and JavaScript/React (frontend visualization).
-
-### 2. The Business Integration (MyNexRyde)
-*   Use your coding skills to automate dispatch or logistics for MyNexRyde.
-*   Use your GIS skills to optimize routes or analyze customer density.
-`;
+export const FALLBACK_DAILY_PLAN: DailyPlan = {
+  date: new Date().toISOString(),
+  dayOfWeek: "Today",
+  focusOfTheDay: "System Recovery & Foundation Building",
+  tips: [
+    "The AI service is currently unreachable, but discipline remains.",
+    "Focus on your core competencies: Code, Trade, Study.",
+    "Use this fallback schedule to maintain momentum."
+  ],
+  schedule: [
+    { time: "07:00", activity: "Wake Up & Hydrate", category: "health", description: "Jumpstart the metabolism." },
+    { time: "08:00", activity: "Deep Work: Geomatics/GIS", category: "learning", description: "Review class notes or work on lab assignments." },
+    { time: "10:00", activity: "MyNexRyde Operations", category: "business", description: "Check emails, dispatch status, and logistics." },
+    { time: "12:00", activity: "Lunch & Market Review", category: "rest", description: "Healthy fuel while checking trading charts." },
+    { time: "14:00", activity: "Skill Stack: Python for Finance", category: "learning", description: "Coding practice combining GIS and Trading concepts." },
+    { time: "17:00", activity: "Gym / Physical Training", category: "health", description: "Maintain physical peak performance." },
+    { time: "19:00", activity: "Cybersecurity Lab", category: "hobby", description: "Hack The Box or study network security protocols." },
+    { time: "22:00", activity: "Wind Down & Read", category: "rest", description: "No screens. Prepare for sleep." }
+  ]
+};
