@@ -33,7 +33,9 @@ const VoiceOrb: React.FC<VoiceOrbProps> = ({ onClose }) => {
     if (sessionRef.current) {
         try {
             const session = await sessionRef.current;
-            session.close();
+            // session.close() might not exist on the promise result depending on SDK version types, 
+            // but usually does on the session object.
+            if (session.close) session.close();
         } catch(e) {
             console.error("Error closing session", e);
         }
@@ -59,6 +61,11 @@ const VoiceOrb: React.FC<VoiceOrbProps> = ({ onClose }) => {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const inputContext = new AudioContextClass({ sampleRate: 16000 });
       const outputContext = new AudioContextClass({ sampleRate: 24000 });
+      
+      // Ensure contexts are running (vital for mobile/some browsers)
+      await inputContext.resume();
+      await outputContext.resume();
+
       inputAudioContextRef.current = inputContext;
       outputAudioContextRef.current = outputContext;
 
@@ -110,8 +117,11 @@ const VoiceOrb: React.FC<VoiceOrbProps> = ({ onClose }) => {
                     );
                     
                     const now = outputContext.currentTime;
+                    
+                    // Initialize or reset start time if we've fallen behind
+                    // Adding a small buffer (50ms) prevents stuttering when scheduling very close to 'now'
                     if (nextStartTimeRef.current < now) {
-                        nextStartTimeRef.current = now;
+                        nextStartTimeRef.current = now + 0.05;
                     }
 
                     const source = outputContext.createBufferSource();
@@ -122,7 +132,8 @@ const VoiceOrb: React.FC<VoiceOrbProps> = ({ onClose }) => {
                     nextStartTimeRef.current += audioBuffer.duration;
 
                     source.onended = () => {
-                        if (outputContext.currentTime >= nextStartTimeRef.current - 0.1) {
+                        // Only switch back to listening if we are at the end of the stream
+                        if (outputContext.currentTime >= nextStartTimeRef.current - 0.2) {
                             setStatus('listening');
                         }
                     };
